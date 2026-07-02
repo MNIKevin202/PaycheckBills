@@ -1,6 +1,6 @@
 {
   "name": "paycheck-calculator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "commonjs",
   "main": "main.js",
   "scripts": {
@@ -40,7 +40,10 @@
       "node_modules/bson/**/*"
     ],
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "icon": "images/icon.png"
@@ -49,7 +52,9 @@
       "artifactName": "Paycheck-Calculator-${version}-${arch}.${ext}"
     },
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "images/icon.png"
     },
     "nsis": {
