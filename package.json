@@ -30,6 +30,7 @@
       "server.js",
       "index.html",
       "package.json",
+      "images/icon.png",
       "node_modules/**/*",
       "!node_modules/.cache/**/*",
       "!dist/**/*"
@@ -41,13 +42,15 @@
     "mac": {
       "target": ["dmg", "zip"],
       "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "icon": "images/icon.png"
     },
     "dmg": {
       "artifactName": "Paycheck-Calculator-${version}-${arch}.${ext}"
     },
     "win": {
-      "target": ["nsis"]
+      "target": ["nsis"],
+      "icon": "images/icon.png"
     },
     "nsis": {
       "oneClick": false,
