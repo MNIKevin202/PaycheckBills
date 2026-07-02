@@ -4,10 +4,9 @@
   "type": "commonjs",
   "main": "main.js",
   "scripts": {
-    "start": "node server.js",
-    "electron": "electron .",
-    "build": "electron-packager . \"Paycheck Calculator\" --platform=win32 --arch=x64 --out=dist --overwrite --no-asar",
-    "installer": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win nsis --publish never"
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac dmg zip --publish never",
+    "dist:win": "electron-builder --win nsis --publish never"
   },
   "dependencies": {
     "dotenv": "^16.3.1",
@@ -23,36 +22,41 @@
     "appId": "com.paycheckcalculator.app",
     "productName": "Paycheck Calculator",
     "asar": true,
-    "compression": "store",
     "directories": {
-      "output": "installer-dist"
+      "output": "dist"
     },
     "files": [
       "main.js",
       "server.js",
       "index.html",
-      ".env",
       "package.json",
       "node_modules/**/*",
       "!node_modules/.cache/**/*",
-      "!dist/**/*",
-      "!installer-dist/**/*"
+      "!dist/**/*"
     ],
     "asarUnpack": [
       "node_modules/mongodb/**/*",
       "node_modules/bson/**/*"
     ],
+    "mac": {
+      "target": ["dmg", "zip"],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "artifactName": "Paycheck-Calculator-${version}-${arch}.${ext}"
+    },
     "win": {
       "target": ["nsis"]
     },
     "nsis": {
       "oneClick": false,
-      "allowElevation": true,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Paycheck Calculator",
-      "artifactName": "Paycheck-Calculator-Setup-${version}.${ext}"
+      "artifactName": "Paycheck-Calculator-Setup-${version}-${arch}.${ext}"
     }
   }
 }
