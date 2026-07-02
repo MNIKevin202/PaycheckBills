@@ -47,13 +47,11 @@
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "icon": "images/icon.png",
-      "notarize": false
+      "notarize": false,
+      "artifactName": "Paycheck-Calculator-${version}-${arch}.${ext}"
     },
     "dmg": {
       "artifactName": "Paycheck-Calculator-${version}-${arch}.${ext}"
-    },
-    "zip": {
-      "artifactName": "Paycheck-Calculator-${version}-${arch}-mac.${ext}"
     },
     "win": {
       "target": [
