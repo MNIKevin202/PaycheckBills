@@ -12,6 +12,8 @@ const { ready } = require('./server.js');
 
 let mainWindow;
 
+app.disableHardwareAcceleration();
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1350,
