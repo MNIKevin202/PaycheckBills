@@ -46,7 +46,8 @@
       ],
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "icon": "images/icon.png"
+      "icon": "images/icon.png",
+      "notarize": false
     },
     "dmg": {
       "artifactName": "Paycheck-Calculator-${version}-${arch}.${ext}"
