@@ -1,0 +1,2468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paycheck Calculator</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-input: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #7d8590;
+  --accent: #58a6ff;
+  --accent-dim: #1f3a5f;
+  --green: #3fb950;
+  --green-dim: #1a3a20;
+  --red: #f85149;
+  --yellow: #e3b341;
+  --purple: #bc8cff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+h2 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-icon {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, #1f6feb 0%, #8957e5 100%);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.page-title { font-size: 22px; font-weight: 700; color: var(--text); }
+.page-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.left-col { display: flex; flex-direction: column; gap: 14px; }
+.right-col { display: flex; flex-direction: column; gap: 14px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.card-net {
+  border-color: var(--accent-dim);
+  background: linear-gradient(160deg, #161b22 0%, #0d1a2d 100%);
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 7px 10px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input:focus, select:focus { border-color: var(--accent); }
+input[readonly] { opacity: 0.55; cursor: default; }
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%237d8590' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+.row { margin-bottom: 10px; }
+.row:last-child { margin-bottom: 0; }
+
+.input-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.prefix-wrap { position: relative; }
+.prefix-wrap .sym {
+  position: absolute; left: 10px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted); pointer-events: none; font-size: 13px;
+}
+.prefix-wrap input { padding-left: 20px; }
+
+.suffix-wrap { position: relative; }
+.suffix-wrap .sym {
+  position: absolute; right: 10px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted); pointer-events: none; font-size: 13px;
+}
+.suffix-wrap input { padding-right: 24px; }
+
+.divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+.toggle-row {
+  display: flex;
+  background: var(--bg-input);
+  border-radius: 6px;
+  padding: 2px;
+  margin-bottom: 8px;
+}
+.toggle-row button {
+  flex: 1; background: none; border: none;
+  color: var(--text-muted); cursor: pointer;
+  font-size: 12px; padding: 4px 8px;
+  border-radius: 4px; transition: all 0.15s;
+}
+.toggle-row button.on {
+  background: var(--accent-dim);
+  color: var(--accent); font-weight: 600;
+}
+
+/* Net summary */
+.net-lbl {
+  font-size: 11px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  text-align: center; margin-bottom: 4px;
+}
+.net-val {
+  font-size: 42px; font-weight: 800;
+  color: var(--green); text-align: center;
+  letter-spacing: -1px; margin-bottom: 4px;
+  transition: color 0.2s;
+}
+.net-val.neg { color: var(--red); }
+
+.proj-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-top: 14px;
+}
+.proj-box {
+  background: var(--bg-input); border-radius: 8px;
+  padding: 10px; text-align: center;
+}
+.proj-amt { font-size: 19px; font-weight: 700; color: var(--accent); }
+.proj-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Two-col result grid */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* Result rows */
+.res-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 3px 0;
+}
+.res-name { font-size: 13px; color: var(--text-muted); }
+.res-name.bold { color: var(--text); font-weight: 600; }
+.res-amt { font-size: 13px; font-weight: 500; }
+.res-amt.neg { color: var(--red); }
+.res-amt.pos { color: var(--green); }
+.res-amt.bold { color: var(--text); font-weight: 700; font-size: 14px; }
+
+.sub-header {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-muted);
+  margin-bottom: 8px; margin-top: 2px;
+}
+
+/* Gross breakdown box */
+.gross-box {
+  background: var(--bg-input); border-radius: 8px;
+  padding: 10px; margin-bottom: 10px;
+}
+
+/* Tax rows */
+.tax-line {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 5px 0;
+  border-bottom: 1px solid rgba(48,54,61,0.6);
+}
+.tax-line:last-child { border-bottom: none; }
+.tax-name-wrap { display: flex; align-items: center; gap: 0; }
+.tax-name { font-size: 13px; }
+.tax-rate-badge {
+  font-size: 10px; color: var(--text-muted);
+  background: var(--bg-input); border-radius: 4px;
+  padding: 1px 5px; margin-left: 6px;
+}
+.tax-amt { font-size: 13px; font-weight: 600; color: var(--red); }
+
+/* Deposits table */
+.deposits-table { width: 100%; border-collapse: collapse; }
+.deposits-table th {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--text-muted);
+  padding: 6px 6px; text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+.deposits-table th:not(:first-child) { text-align: right; }
+.deposits-table td { padding: 5px 4px; vertical-align: middle; border-bottom: 1px solid rgba(48,54,61,0.4); }
+.deposits-table td:not(:first-child) { text-align: right; }
+.deposits-table td input {
+  background: transparent; border: 1px solid transparent;
+  border-radius: 4px; padding: 3px 5px;
+  width: 100%; text-align: inherit;
+  font-size: 13px;
+}
+.deposits-table td input:focus {
+  background: var(--bg-input); border-color: var(--border);
+}
+.deposits-table td:last-child { width: 28px; }
+
+.btn-del {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 16px; line-height: 1;
+  padding: 0 2px; border-radius: 3px;
+  transition: color 0.15s;
+}
+.btn-del:hover { color: var(--red); }
+
+.btn-add {
+  width: 100%; margin-top: 8px;
+  background: none; border: 1px dashed var(--border);
+  border-radius: 6px; color: var(--text-muted);
+  cursor: pointer; font-size: 12px; padding: 7px;
+  transition: all 0.15s;
+}
+.btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+.unalloc-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 9px 12px;
+  background: var(--bg-input); border-radius: 8px;
+  margin-top: 10px; font-weight: 600;
+}
+.unalloc-label { font-size: 13px; color: var(--text-muted); }
+.unalloc-val { font-size: 15px; }
+.unalloc-val.pos { color: var(--green); }
+.unalloc-val.neg { color: var(--red); }
+
+.deposit-summary {
+  display: flex; gap: 8px; align-items: center;
+  margin-bottom: 12px;
+}
+.dep-chip {
+  font-size: 11px; padding: 2px 8px;
+  border-radius: 10px; font-weight: 500;
+}
+.dep-chip-blue { background: rgba(88,166,255,0.12); color: var(--accent); border: 1px solid rgba(88,166,255,0.2); }
+.dep-chip-green { background: rgba(63,185,80,0.12); color: var(--green); border: 1px solid rgba(63,185,80,0.2); }
+.dep-chip-red { background: rgba(248,81,73,0.12); color: var(--red); border: 1px solid rgba(248,81,73,0.2); }
+
+/* Hours Tracker */
+.ht-top {
+  display: flex; align-items: flex-end; gap: 20px;
+  margin-bottom: 18px; flex-wrap: wrap;
+}
+.ht-top > div > label {
+  display: block; font-size: 11px; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px;
+}
+#payDate {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+  color-scheme: dark;
+}
+#payDate:focus { border-color: var(--accent); }
+#payDate::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+.ht-period {
+  font-size: 13px; color: var(--text-muted);
+  padding: 7px 12px; background: var(--bg-input);
+  border-radius: 6px; border: 1px solid var(--border);
+  align-self: flex-end;
+}
+.ht-period strong { color: var(--accent); font-weight: 600; }
+
+.ht-week-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.ht-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.ht-day {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+.ht-day:focus-within { border-color: var(--accent); }
+.ht-day.weekend { opacity: 0.55; }
+.ht-day.has-hours { border-color: rgba(88,166,255,0.4); }
+.ht-dayname {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.ht-date {
+  font-size: 11px; color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.ht-day input {
+  width: 100%; background: transparent; border: none;
+  color: var(--text); font-size: 16px; font-weight: 600;
+  text-align: center; outline: none; padding: 0;
+  -moz-appearance: textfield;
+}
+.ht-day input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.ht-day input::placeholder { color: var(--border); font-weight: 400; font-size: 14px; }
+.ht-pto-row {
+  display: flex; align-items: center; gap: 3px;
+  margin-top: 5px; padding-top: 5px;
+  border-top: 1px dashed rgba(88,166,255,0.2);
+}
+.ht-pto-label {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent); opacity: 0.7; flex-shrink: 0;
+}
+.ht-pto-row input {
+  font-size: 12px; font-weight: 600; color: var(--accent);
+}
+.ht-day.has-pto { border-color: rgba(88,166,255,0.6); }
+
+.ht-totals {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px;
+}
+.ht-stat {
+  background: var(--bg-input); border-radius: 8px;
+  padding: 10px 16px; flex: 1; min-width: 100px;
+  text-align: center;
+}
+.ht-stat-val { font-size: 20px; font-weight: 700; color: var(--text); }
+.ht-stat-val.ot { color: var(--yellow); }
+.ht-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+.ht-note { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+
+/* Time Calculator */
+.tc-wrap {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+.tc-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 10px;
+}
+.tc-row {
+  display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap;
+}
+.tc-field { display: flex; flex-direction: column; gap: 4px; }
+.tc-field label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.tc-field input[type="time"] {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 13px;
+  outline: none;
+  width: 118px;
+  transition: border-color 0.15s;
+}
+.tc-field input[type="time"]:focus { border-color: var(--accent); }
+.tc-arrow { color: var(--border); font-size: 16px; padding-bottom: 7px; }
+
+/* OT Exemption Card */
+.ot-exempt-card { border-color: rgba(88,166,255,0.25); }
+.ot-exempt-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ot-exempt-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.ot-exempt-badge {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  background: rgba(88,166,255,0.15); color: var(--accent);
+  border: 1px solid rgba(88,166,255,0.3); border-radius: 4px; padding: 2px 7px;
+}
+.ot-exempt-note {
+  font-size: 12px; color: var(--text-muted); line-height: 1.5;
+  margin: 0 0 14px; border-left: 2px solid rgba(88,166,255,0.3); padding-left: 10px;
+}
+.ot-exempt-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.ot-exempt-stat {
+  flex: 1; min-width: 120px; background: var(--bg-input);
+  border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; text-align: center;
+}
+.ot-exempt-val { font-size: 20px; font-weight: 700; color: var(--text); }
+.ot-exempt-val.green { color: var(--green); }
+.ot-exempt-lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.3; }
+.ot-exempt-ytd { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+.ot-exempt-ytd-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.ot-hist-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 14px; table-layout: fixed; }
+.ot-hist-table col.col-date  { width: 155px; }
+.ot-hist-table col.col-num   { width: 100px; }
+.ot-hist-table col.col-pay   { width: 110px; }
+.ot-hist-table col.col-del   { width: 34px; }
+.ot-hist-table th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 0 8px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+.ot-hist-table td { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+.ot-hist-table input { background: var(--bg-input); border: 1px solid var(--border); border-radius: 5px; color: var(--text); padding: 5px 8px; font-size: 13px; font-family: inherit; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.15s; -moz-appearance: textfield; }
+.ot-hist-table input[type="date"] { color-scheme: dark; }
+.ot-hist-table input::-webkit-outer-spin-button,
+.ot-hist-table input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.ot-hist-table input:focus { border-color: var(--accent); }
+.ot-hist-table td.ot-hist-pay { color: var(--green); font-weight: 600; font-size: 14px; }
+.ot-hist-table td.ot-hist-fedtax { color: var(--red); font-weight: 600; font-size: 14px; }
+.ot-hist-total td { font-weight: 700; color: var(--text); padding-top: 9px; border-top: 1px solid var(--border); border-bottom: none; font-size: 13px; }
+.ot-hist-total td:nth-child(4) { color: var(--green); font-size: 15px; }
+.ot-hist-total td:nth-child(5) { color: var(--red); font-size: 15px; }
+.ot-hist-del { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 2px 4px; border-radius: 4px; transition: color 0.15s; line-height: 1; }
+.ot-hist-del:hover { color: var(--red); }
+.ot-curr-row td { background: rgba(88,166,255,0.05); color: var(--text); font-size: 13px; border-bottom: 1px solid rgba(88,166,255,0.15); }
+.ot-curr-row td.ot-hist-pay { color: var(--accent); }
+.ot-curr-row td.ot-hist-fedtax { color: #e06c75; }
+.ot-exempt-ytd-stats { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; padding-top: 4px; }
+.ot-exempt-periods { display: flex; flex-direction: column; }
+.ot-exempt-refund-grid { display: flex; gap: 10px; flex-wrap: wrap; flex: 1; }
+.ot-refund-box { flex: 1; min-width: 130px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+.ot-refund-val { font-size: 20px; font-weight: 700; margin-top: 4px; }
+.ot-refund-val.green { color: var(--green); }
+.ot-refund-val.red   { color: var(--red); }
+.tc-result {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 6px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-width: 80px; text-align: center;
+}
+.tc-result-val {
+  font-size: 22px; font-weight: 700; color: var(--green);
+  line-height: 1;
+}
+.tc-result-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.tc-apply {
+  display: flex; align-items: flex-end; gap: 6px; margin-left: 6px;
+}
+.tc-apply select {
+  width: 160px; font-size: 12px; padding: 6px 28px 6px 8px;
+  background: var(--bg-card);
+}
+.tc-btn {
+  background: var(--accent-dim); border: 1px solid rgba(88,166,255,0.3);
+  color: var(--accent); border-radius: 6px; cursor: pointer;
+  font-size: 12px; font-weight: 600; padding: 7px 14px;
+  transition: background 0.15s; white-space: nowrap;
+}
+.tc-btn:hover { background: #2d5a9e; }
+.tc-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* ── Tab navigation ── */
+.tab-bar {
+  display: flex; gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.tab-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 14px; font-weight: 500;
+  padding: 8px 18px; border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s; margin-bottom: -1px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Bills tab ── */
+.bills-top {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+  margin-bottom: 16px;
+}
+.stat-box {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+}
+.stat-box-val { font-size: 22px; font-weight: 700; color: var(--text); }
+.stat-box-val.accent { color: var(--accent); }
+.stat-box-val.green  { color: var(--green); }
+.stat-box-val.red    { color: var(--red); }
+.stat-box-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3px; }
+
+.bills-table { width: 100%; border-collapse: collapse; }
+.bills-table th {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--text-muted); padding: 8px 10px; text-align: left;
+  border-bottom: 1px solid var(--border); font-weight: 500;
+}
+.bills-table th:not(:first-child):not(:nth-child(2)) { text-align: right; }
+.bills-table td { padding: 8px 10px; border-bottom: 1px solid rgba(48,54,61,0.5); vertical-align: middle; }
+.bills-table td:not(:first-child):not(:nth-child(2)):not(:last-child) { text-align: right; }
+.bills-table td input {
+  background: transparent; border: 1px solid transparent;
+  border-radius: 4px; color: var(--text); font-size: 13px;
+  padding: 3px 6px; width: 100%; text-align: inherit;
+  -moz-appearance: textfield;
+}
+.bills-table td input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.bills-table td input:focus { background: var(--bg-input); border-color: var(--border); outline: none; }
+.bills-table tfoot td { border-top: 2px solid var(--border); border-bottom: none; font-weight: 600; padding-top: 10px; }
+.bills-table .name-input { min-width: 120px; }
+.apr-input { max-width: 70px; }
+
+.btn-icon {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 15px; padding: 2px 5px;
+  border-radius: 4px; transition: color 0.15s;
+}
+.btn-icon:hover { color: var(--red); }
+
+.btn-primary {
+  background: var(--accent-dim); border: 1px solid rgba(88,166,255,0.25);
+  color: var(--accent); border-radius: 7px; cursor: pointer;
+  font-size: 13px; font-weight: 600; padding: 8px 16px;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: #2d5a9e; }
+
+/* Payoff strategy cards */
+.strategy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.strategy-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px;
+}
+.strategy-card.winner { border-color: var(--green); }
+.strategy-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.strategy-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+.strategy-stat { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(48,54,61,0.5); }
+.strategy-stat:last-of-type { border-bottom: none; }
+.strategy-stat-lbl { font-size: 13px; color: var(--text-muted); }
+.strategy-stat-val { font-size: 13px; font-weight: 600; }
+
+.payoff-order { margin-top: 12px; }
+.payoff-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid rgba(48,54,61,0.4);
+}
+.payoff-item:last-child { border-bottom: none; }
+.payoff-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--bg-input); color: var(--text-muted);
+  font-size: 11px; font-weight: 700; display: flex;
+  align-items: center; justify-content: center; flex-shrink: 0;
+}
+.payoff-name { flex: 1; font-size: 13px; }
+.payoff-months { font-size: 12px; color: var(--text-muted); }
+.payoff-months strong { color: var(--accent); }
+
+.winner-banner {
+  background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.25);
+  border-radius: 8px; padding: 12px 16px; margin-top: 14px;
+  font-size: 13px; color: var(--green);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Phase cards */
+.phase-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-top: 10px;
+}
+.phase-card.phase-first { border-color: var(--accent-dim); }
+.phase-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.phase-badge {
+  font-size: 11px; font-weight: 700; padding: 2px 9px;
+  background: var(--accent-dim); color: var(--accent);
+  border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+}
+.phase-dates {
+  font-size: 12px; color: var(--text-muted); flex: 1;
+}
+.phase-duration { opacity: 0.7; }
+.phase-total { font-size: 12px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+.phase-payments { display: flex; flex-direction: column; gap: 5px; }
+.phase-payment-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 8px; border-radius: 6px;
+  background: rgba(48,54,61,0.3);
+  font-size: 13px;
+}
+.phase-payment-row.phase-focus {
+  background: rgba(88,166,255,0.1);
+  border: 1px solid rgba(88,166,255,0.2);
+}
+.phase-bill-name { color: var(--text); }
+.phase-bill-amt { font-weight: 600; white-space: nowrap; }
+.phase-payment-row.phase-focus .phase-bill-amt { color: var(--accent); }
+.phase-payment-row:not(.phase-focus) .phase-bill-amt { color: var(--text-muted); }
+.phase-arrow {
+  text-align: center; font-size: 12px; color: var(--text-muted);
+  padding: 6px 0;
+}
+.phase-arrow strong { color: var(--green); }
+
+/* Utilities */
+.due-badge {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 10px;
+  background: rgba(88,166,255,0.12); color: var(--accent);
+  white-space: nowrap;
+}
+.catchup-note {
+  font-size: 11px; color: var(--accent); margin-top: 2px;
+  font-style: italic;
+}
+
+.keep-row {
+  display: flex; align-items: flex-end; gap: 14px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.keep-row .row { margin-bottom: 0; min-width: 200px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .ht-grid { grid-template-columns: repeat(4, 1fr); }
+  .bills-top { grid-template-columns: 1fr 1fr; }
+  .strategy-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-icon">💵</div>
+  <div>
+    <div class="page-title">Paycheck Calculator</div>
+    <div class="page-sub">Real-time net pay with IRS 2025 withholding tables</div>
+    <span id="saveIndicator" style="font-size:11px;color:var(--green);opacity:0;transition:opacity 0.4s;margin-left:8px;">✓ Saved</span>
+  </div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('paycheck')">💵 Paycheck</button>
+  <button class="tab-btn" onclick="switchTab('bills')">📋 Bills &amp; Payoff</button>
+</div>
+
+<!-- ═══ PAYCHECK TAB ═══ -->
+<div id="tab-paycheck" class="tab-panel active">
+
+<!-- Hours Tracker -->
+<div class="card" style="margin-bottom: 16px;">
+  <h2>Hours Tracker</h2>
+  <div class="ht-top">
+    <div>
+      <label>Pay Date</label>
+      <input type="date" id="payDate" value="2026-06-18" oninput="buildHoursGrid()">
+    </div>
+    <div class="ht-period" id="htPeriodDisplay">—</div>
+  </div>
+
+  <!-- Time Calculator -->
+  <div class="tc-wrap">
+    <div class="tc-label">Daily Time Calculator</div>
+    <div class="tc-row">
+      <div class="tc-field"><label>Clock In</label><input type="time" id="tcIn" oninput="calcTime()"></div>
+      <div class="tc-arrow">→</div>
+      <div class="tc-field"><label>Lunch Out</label><input type="time" id="tcLunchOut" oninput="calcTime()"></div>
+      <div class="tc-arrow">→</div>
+      <div class="tc-field"><label>Lunch In</label><input type="time" id="tcLunchIn" oninput="calcTime()"></div>
+      <div class="tc-arrow">→</div>
+      <div class="tc-field"><label>Clock Out</label><input type="time" id="tcOut" oninput="calcTime()"></div>
+      <div class="tc-result">
+        <div class="tc-result-val" id="tcHours">—</div>
+        <div class="tc-result-lbl">Hours</div>
+      </div>
+      <div class="tc-apply">
+        <div class="tc-field"><label>Apply to day</label><select id="tcDaySelect"></select></div>
+        <button class="tc-btn" id="tcApplyBtn" onclick="applyTimeToDay()" disabled>Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ht-week-label" id="htWeek1Label">Week 1</div>
+  <div class="ht-grid" id="htWeek1"></div>
+
+  <div class="ht-week-label" id="htWeek2Label">Week 2</div>
+  <div class="ht-grid" id="htWeek2"></div>
+
+  <div class="ht-totals">
+    <div class="ht-stat"><div class="ht-stat-val green" id="htSoFarHrs">0</div><div class="ht-stat-lbl">Worked So Far</div></div>
+    <div class="ht-stat"><div class="ht-stat-val" id="htTotalHrs">0</div><div class="ht-stat-lbl">Total Hours</div></div>
+    <div class="ht-stat"><div class="ht-stat-val" id="htRegHrs">0</div><div class="ht-stat-lbl">Regular</div></div>
+    <div class="ht-stat"><div class="ht-stat-val ot" id="htOTHrs">0</div><div class="ht-stat-lbl">Overtime</div></div>
+    <div class="ht-stat"><div class="ht-stat-val" id="htPTOHrs">0</div><div class="ht-stat-lbl">PTO</div></div>
+  </div>
+  <div class="ht-note">Overtime calculated per week on worked hours only (over 40 hrs). PTO hours are paid at regular rate and never trigger OT. The time calculator fills worked hours only.</div>
+</div>
+
+<div class="layout">
+
+  <!-- ========== LEFT: INPUTS ========== -->
+  <div class="left-col">
+
+    <!-- Pay Setup -->
+    <div class="card">
+      <h2>Pay Setup</h2>
+      <div class="row">
+        <label>Base Hourly Rate</label>
+        <div class="prefix-wrap"><span class="sym">$</span>
+          <input type="number" id="baseRate" value="26.80" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="row">
+        <label>Pay Frequency</label>
+        <select id="payFreq">
+          <option value="26" selected>Biweekly — 26 per year</option>
+          <option value="24">Semi-monthly — 24 per year</option>
+          <option value="52">Weekly — 52 per year</option>
+          <option value="12">Monthly — 12 per year</option>
+        </select>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <label>Federal Filing Status (W-4)</label>
+        <select id="filingStatus">
+          <option value="single" selected>Single / Married Filing Separately</option>
+          <option value="mfj">Married Filing Jointly</option>
+          <option value="hoh">Head of Household</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>W-4 Step 3: Dependent Credits (annual $)</label>
+        <div class="prefix-wrap"><span class="sym">$</span>
+          <input type="number" id="depCredits" value="0" step="100" min="0">
+        </div>
+      </div>
+      <div class="row">
+        <label>Additional Federal Withholding (per check)</label>
+        <div class="prefix-wrap"><span class="sym">$</span>
+          <input type="number" id="addlFed" value="0" step="1" min="0">
+        </div>
+      </div>
+      <div class="row">
+        <label>State Income Tax Rate</label>
+        <div class="suffix-wrap"><span class="sym">%</span>
+          <input type="number" id="stateRate" value="2.765" step="0.001" min="0" max="20">
+        </div>
+      </div>
+      <div class="row">
+        <label>City / Local Tax Rate</label>
+        <div class="suffix-wrap"><span class="sym">%</span>
+          <input type="number" id="cityRate" value="0" step="0.001" min="0" max="10">
+        </div>
+      </div>
+    </div>
+
+    <!-- Hours -->
+    <div class="card">
+      <h2>Hours This Period</h2>
+      <div class="input-pair">
+        <div><label>Regular Hours</label>
+          <input type="number" id="regHrs" value="80" step="0.25" min="0"></div>
+        <div><label>Rate</label>
+          <div class="prefix-wrap"><span class="sym">$</span>
+            <input type="number" id="regRate" readonly tabindex="-1"></div></div>
+      </div>
+      <div class="input-pair">
+        <div><label>PTO Hours</label>
+          <input type="number" id="ptoHrs" value="0" step="0.25" min="0"></div>
+        <div><label>Rate</label>
+          <div class="prefix-wrap"><span class="sym">$</span>
+            <input type="number" id="ptoRate" readonly tabindex="-1"></div></div>
+      </div>
+      <div class="input-pair">
+        <div><label>Overtime Hours (1.5×)</label>
+          <input type="number" id="otHrs" value="4" step="0.25" min="0"></div>
+        <div><label>Rate</label>
+          <div class="prefix-wrap"><span class="sym">$</span>
+            <input type="number" id="otRate" readonly tabindex="-1"></div></div>
+      </div>
+      <div class="input-pair" style="margin-bottom:0;">
+        <div><label>Double Time Hours (2×)</label>
+          <input type="number" id="dtHrs" value="0" step="0.25" min="0"></div>
+        <div><label>Rate</label>
+          <div class="prefix-wrap"><span class="sym">$</span>
+            <input type="number" id="dtRate" readonly tabindex="-1"></div></div>
+      </div>
+    </div>
+
+    <!-- Pre-Tax Deductions -->
+    <div class="card">
+      <h2>Pre-Tax Deductions</h2>
+
+      <label style="margin-bottom:5px;">401(k) Contribution</label>
+      <div class="toggle-row" id="k401Toggle">
+        <button class="on" onclick="setK401('pct')">Percent</button>
+        <button onclick="setK401('fixed')">Fixed $</button>
+      </div>
+      <div id="k401Pct" class="row">
+        <div class="suffix-wrap"><span class="sym">%</span>
+          <input type="number" id="k401PctVal" value="3" step="0.1" min="0" max="100">
+        </div>
+      </div>
+      <div id="k401Fixed" class="row" style="display:none;">
+        <div class="prefix-wrap"><span class="sym">$</span>
+          <input type="number" id="k401FixedVal" value="0" step="1" min="0">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row"><label>Medical Insurance</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="medical" value="54.00" step="0.01" min="0"></div></div>
+      <div class="row"><label>H.S.A.</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="hsa" value="0" step="0.01" min="0"></div></div>
+      <div class="row"><label>Dental</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="dental" value="16.21" step="0.01" min="0"></div></div>
+      <div class="row"><label>Vision</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="vision" value="3.14" step="0.01" min="0"></div></div>
+      <div class="row"><label>F.S.A.</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="fsa" value="23.07" step="0.01" min="0"></div></div>
+      <div class="row" style="margin-bottom:0;"><label>Life Insurance</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="lifePre" value="0" step="0.01" min="0"></div></div>
+    </div>
+
+    <!-- Post-Tax Deductions -->
+    <div class="card">
+      <h2>Post-Tax Deductions</h2>
+      <div class="row"><label>Additional Life Insurance</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="addlLife" value="6.20" step="0.01" min="0"></div></div>
+      <div class="row"><label>Hospital Indemnity</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="hospInd" value="5.29" step="0.01" min="0"></div></div>
+      <div class="row"><label>Supplemental LTD</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="supplLtd" value="5.20" step="0.01" min="0"></div></div>
+      <div class="row"><label>Voluntary Accident</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="volAcc" value="3.84" step="0.01" min="0"></div></div>
+      <div class="row" style="margin-bottom:0;"><label>Voluntary Critical Illness</label>
+        <div class="prefix-wrap"><span class="sym">$</span><input type="number" id="volCrit" value="4.50" step="0.01" min="0"></div></div>
+    </div>
+
+  </div>
+  <!-- END LEFT -->
+
+  <!-- ========== RIGHT: RESULTS ========== -->
+  <div class="right-col">
+
+    <!-- Net Paycheck -->
+    <div class="card card-net">
+      <h2>Net Paycheck</h2>
+      <div class="net-lbl">Take-Home This Period</div>
+      <div class="net-val" id="netVal">$0.00</div>
+      <div class="proj-grid">
+        <div class="proj-box">
+          <div class="proj-amt" id="monthlyVal">$0.00</div>
+          <div class="proj-lbl">Monthly (×2)</div>
+        </div>
+        <div class="proj-box">
+          <div class="proj-amt" id="annualVal">$0.00</div>
+          <div class="proj-lbl">Annual (×<span id="ppLbl">26</span>)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gross + Taxes side by side -->
+    <div class="two-col">
+
+      <!-- Gross Pay -->
+      <div class="card">
+        <h2>Gross Pay</h2>
+        <div class="gross-box">
+          <div class="res-row">
+            <span class="res-name">Regular (<span id="d_regHrs">80</span> hrs)</span>
+            <span class="res-amt" id="d_regPay">$0.00</span>
+          </div>
+          <div class="res-row">
+            <span class="res-name">PTO (<span id="d_ptoHrs">0</span> hrs)</span>
+            <span class="res-amt" id="d_ptoPay">$0.00</span>
+          </div>
+          <div class="res-row">
+            <span class="res-name">Overtime (<span id="d_otHrs">0</span> hrs)</span>
+            <span class="res-amt" id="d_otPay">$0.00</span>
+          </div>
+          <div class="res-row">
+            <span class="res-name">Double Time (<span id="d_dtHrs">0</span> hrs)</span>
+            <span class="res-amt" id="d_dtPay">$0.00</span>
+          </div>
+        </div>
+        <div class="res-row">
+          <span class="res-name bold">Total Gross</span>
+          <span class="res-amt bold" id="d_gross">$0.00</span>
+        </div>
+        <div class="res-row" style="margin-top:4px;">
+          <span class="res-name">Annual Salary</span>
+          <span class="res-amt" style="color:var(--text-muted);" id="d_annual">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Tax Withholdings -->
+      <div class="card">
+        <h2>Tax Withholdings</h2>
+        <div class="tax-line">
+          <div class="tax-name-wrap">
+            <span class="tax-name">Social Security</span>
+            <span class="tax-rate-badge">6.2%</span>
+          </div>
+          <span class="tax-amt" id="d_oasdi">$0.00</span>
+        </div>
+        <div class="tax-line">
+          <div class="tax-name-wrap">
+            <span class="tax-name">Medicare</span>
+            <span class="tax-rate-badge">1.45%</span>
+          </div>
+          <span class="tax-amt" id="d_medicare">$0.00</span>
+        </div>
+        <div class="tax-line">
+          <div class="tax-name-wrap">
+            <span class="tax-name">Federal Income Tax</span>
+            <span class="tax-rate-badge" id="d_fedBadge">~0%</span>
+          </div>
+          <span class="tax-amt" id="d_federal">$0.00</span>
+        </div>
+        <div class="tax-line">
+          <div class="tax-name-wrap">
+            <span class="tax-name">State</span>
+            <span class="tax-rate-badge" id="d_stateBadge">0%</span>
+          </div>
+          <span class="tax-amt" id="d_state">$0.00</span>
+        </div>
+        <div class="tax-line">
+          <div class="tax-name-wrap">
+            <span class="tax-name">City / Local</span>
+            <span class="tax-rate-badge" id="d_cityBadge">0%</span>
+          </div>
+          <span class="tax-amt" id="d_city">$0.00</span>
+        </div>
+        <div class="divider"></div>
+        <div class="res-row">
+          <span class="res-name bold">Total Taxes</span>
+          <span class="res-amt neg bold" id="d_totalTax">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deductions Summary -->
+    <div class="card">
+      <h2>Deductions Summary</h2>
+      <div class="two-col">
+        <!-- Pre-Tax -->
+        <div>
+          <div class="sub-header">Pre-Tax</div>
+          <div class="res-row"><span class="res-name">401(k)</span><span class="res-amt neg" id="d_401k">$0.00</span></div>
+          <div class="res-row"><span class="res-name">Medical</span><span class="res-amt neg" id="d_medical">$0.00</span></div>
+          <div class="res-row"><span class="res-name">HSA</span><span class="res-amt neg" id="d_hsa">$0.00</span></div>
+          <div class="res-row"><span class="res-name">Dental</span><span class="res-amt neg" id="d_dental">$0.00</span></div>
+          <div class="res-row"><span class="res-name">Vision</span><span class="res-amt neg" id="d_vision">$0.00</span></div>
+          <div class="res-row"><span class="res-name">FSA</span><span class="res-amt neg" id="d_fsa">$0.00</span></div>
+          <div class="res-row"><span class="res-name">Life Ins.</span><span class="res-amt neg" id="d_lifePre">$0.00</span></div>
+          <div class="divider"></div>
+          <div class="res-row">
+            <span class="res-name bold">Total Pre-Tax</span>
+            <span class="res-amt neg bold" id="d_totalPre">$0.00</span>
+          </div>
+        </div>
+        <!-- Post-Tax -->
+        <div>
+          <div class="sub-header">Post-Tax</div>
+          <div class="res-row"><span class="res-name">Addtl. Life</span><span class="res-amt neg" id="d_addlLife">$0.00</span></div>
+          <div class="res-row"><span class="res-name">Hospital Ind.</span><span class="res-amt neg" id="d_hospInd">$0.00</span></div>
+          <div class="res-row"><span class="res-name">Suppl. LTD</span><span class="res-amt neg" id="d_supplLtd">$0.00</span></div>
+          <div class="res-row"><span class="res-name">Vol. Accident</span><span class="res-amt neg" id="d_volAcc">$0.00</span></div>
+          <div class="res-row"><span class="res-name">Vol. Crit. Ill.</span><span class="res-amt neg" id="d_volCrit">$0.00</span></div>
+          <div class="divider"></div>
+          <div class="res-row">
+            <span class="res-name bold">Total Post-Tax</span>
+            <span class="res-amt neg bold" id="d_totalPost">$0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  <!-- OT Tax Exemption Estimator -->
+  <div class="card ot-exempt-card" style="margin-top:16px;">
+    <div class="ot-exempt-header">
+      <span class="ot-exempt-title">Overtime Tax Exemption Estimator</span>
+      <span class="ot-exempt-badge">Proposed Federal Policy</span>
+    </div>
+    <p class="ot-exempt-note">
+      Based on the proposed "No Tax on Overtime" policy — OT pay would be exempt from federal income tax
+      (FICA / Social Security / Medicare still apply). This shows your estimated federal tax savings
+      per paycheck and projected refund if you had already been paying it this year.
+    </p>
+    <div class="ot-exempt-grid">
+      <div class="ot-exempt-stat">
+        <div class="ot-exempt-val" id="oe_otPay">$0.00</div>
+        <div class="ot-exempt-lbl">OT Pay This Check</div>
+      </div>
+      <div class="ot-exempt-stat">
+        <div class="ot-exempt-val green" id="oe_savedThis">$0.00</div>
+        <div class="ot-exempt-lbl">Fed Tax Saved This Check</div>
+      </div>
+      <div class="ot-exempt-stat">
+        <div class="ot-exempt-val green" id="oe_annualSaved">$0.00</div>
+        <div class="ot-exempt-lbl">Projected Annual Savings<br><span style="font-size:10px;opacity:0.6;">(if every check has this OT)</span></div>
+      </div>
+    </div>
+    <div class="ot-exempt-ytd">
+      <div class="ot-exempt-ytd-header">
+        <span style="font-size:12px;font-weight:600;color:var(--text);">YTD Overtime History</span>
+        <button class="btn-primary" style="padding:5px 12px;font-size:12px;" onclick="addOTEntry()">+ Add Entry</button>
+      </div>
+      <table class="ot-hist-table">
+        <colgroup>
+          <col class="col-date">
+          <col class="col-num">
+          <col class="col-num">
+          <col class="col-pay">
+          <col class="col-pay">
+          <col class="col-del">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Date / Period</th>
+            <th>OT Hours</th>
+            <th>Base Rate</th>
+            <th>OT Pay</th>
+            <th>Fed Tax</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="otHistBody"></tbody>
+        <tfoot>
+          <tr class="ot-hist-total">
+            <td colspan="3">YTD Totals</td>
+            <td id="oe_ytdOTPay">$0.00</td>
+            <td id="oe_ytdTaxCol">$0.00</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="ot-exempt-ytd-stats">
+        <!-- Pay stub YTD inputs -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;width:100%;margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.06em;text-transform:uppercase;width:100%;margin-bottom:-4px;">From Your Pay Stub (YTD)</div>
+          <div>
+            <div class="ot-exempt-lbl" style="margin-bottom:5px;">Pay Periods Completed</div>
+            <input type="number" id="oe_periodsYTD" value="1" min="1" max="26" step="1" oninput="calc();debounceBillSave()" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:13px;font-family:inherit;outline:none;width:70px;transition:border-color 0.15s;">
+          </div>
+          <div>
+            <div class="ot-exempt-lbl" style="margin-bottom:5px;">YTD Gross Pay</div>
+            <input type="number" id="oe_ytdGross" value="" min="0" step="0.01" placeholder="0.00" oninput="calc();debounceBillSave()" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:13px;font-family:inherit;outline:none;width:110px;transition:border-color 0.15s;">
+          </div>
+          <div>
+            <div class="ot-exempt-lbl" style="margin-bottom:5px;">YTD Federal Withheld</div>
+            <input type="number" id="oe_ytdFedWithheld" value="" min="0" step="0.01" placeholder="0.00" oninput="calc();debounceBillSave()" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:13px;font-family:inherit;outline:none;width:110px;transition:border-color 0.15s;">
+          </div>
+          <div>
+            <div class="ot-exempt-lbl" style="margin-bottom:5px;">YTD State Withheld</div>
+            <input type="number" id="oe_ytdStateWithheld" value="" min="0" step="0.01" placeholder="0.00" oninput="calc();debounceBillSave()" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 10px;font-size:13px;font-family:inherit;outline:none;width:110px;transition:border-color 0.15s;">
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);width:100%;margin-top:-6px;">Enter numbers from your latest pay stub for the most accurate projection</div>
+        </div>
+        <!-- Refund boxes -->
+        <div class="ot-exempt-refund-grid" style="width:100%;">
+          <div class="ot-refund-box">
+            <div class="ot-exempt-lbl">OT Exemption Refund</div>
+            <div class="ot-refund-val green" id="oe_refund">$0.00</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">if no-tax-on-OT passes</div>
+          </div>
+          <div class="ot-refund-box">
+            <div class="ot-exempt-lbl">Regular Federal Refund / Owed</div>
+            <div class="ot-refund-val" id="oe_regRefund">$0.00</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" id="oe_regRefundNote">enter YTD figures above</div>
+          </div>
+          <div class="ot-refund-box">
+            <div class="ot-exempt-lbl">State Refund / Owed</div>
+            <div class="ot-refund-val" id="oe_stateRefund">$0.00</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" id="oe_stateRefundNote">enter YTD figures above</div>
+          </div>
+          <div class="ot-refund-box">
+            <div class="ot-exempt-lbl">Total Est. Refund / Owed</div>
+            <div class="ot-refund-val" id="oe_totalRefund">$0.00</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;" id="oe_totalRefundNote">federal + state + OT</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+  <!-- END RIGHT -->
+
+</div>
+</div><!-- end tab-paycheck -->
+
+<!-- ═══ BILLS TAB ═══ -->
+<div id="tab-bills" class="tab-panel">
+
+  <!-- Keep for self + hours + summary stats -->
+  <div class="keep-row">
+    <div class="row">
+      <label>Base hours per paycheck</label>
+      <input type="number" id="billsBaseHours" value="80" step="0.25" min="0"
+             oninput="calcBills(); debounceBillSave()">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:3px;" id="b_hoursBreakdown">80 hrs regular</div>
+    </div>
+    <div class="row">
+      <label>Keep for myself per paycheck (untouchable)</label>
+      <div class="prefix-wrap"><span class="sym">$</span>
+        <input type="number" id="keepSelf" value="200" step="10" min="0"
+               oninput="calcBills(); debounceBillSave()">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; flex:1; flex-wrap:wrap;">
+      <div class="stat-box" style="flex:1; min-width:130px;">
+        <div class="stat-box-val green" id="b_netPay">$0.00</div>
+        <div class="stat-box-lbl">Guaranteed Net Pay</div>
+      </div>
+      <div class="stat-box" style="flex:1; min-width:130px;">
+        <div class="stat-box-val red" id="b_fixedExp">$0.00</div>
+        <div class="stat-box-lbl">Fixed Expenses / Mo</div>
+      </div>
+      <div class="stat-box" style="flex:1; min-width:130px;">
+        <div class="stat-box-val accent" id="b_available">$0.00</div>
+        <div class="stat-box-lbl">Available for Debt / Mo</div>
+      </div>
+      <div class="stat-box" style="flex:1; min-width:130px;">
+        <div class="stat-box-val" id="b_totalDebt">$0.00</div>
+        <div class="stat-box-lbl">Total Debt</div>
+      </div>
+      <div class="stat-box" style="flex:1; min-width:130px;">
+        <div class="stat-box-val" id="b_minRequired">$0.00</div>
+        <div class="stat-box-lbl">Min Payments / Mo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bills list -->
+  <div class="card" style="margin-bottom:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h2 style="margin-bottom:0;">My Bills</h2>
+      <button class="btn-primary" onclick="addBill()">+ Add Bill</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="bills-table">
+        <thead>
+          <tr>
+            <th style="width:60px; text-align:center;">Priority</th>
+            <th>Name</th>
+            <th>Curr Pmt</th>
+            <th>Balance</th>
+            <th>Min / Mo</th>
+            <th>APR %</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="billsBody"></tbody>
+        <tfoot>
+          <tr>
+            <td></td>
+            <td>Total</td>
+            <td></td>
+            <td style="text-align:right;" id="b_footBalance">$0.00</td>
+            <td style="text-align:right;" id="b_footMin">$0.00</td>
+            <td></td><td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Fixed monthly expenses (utilities, subscriptions, etc.) -->
+  <div class="card" style="margin-bottom:14px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div>
+        <h2 style="margin-bottom:2px;">Fixed Monthly Expenses</h2>
+        <div style="font-size:12px;color:var(--text-muted);">Utilities, subscriptions, rent — paid every month regardless of debt payoff</div>
+      </div>
+      <button class="btn-primary" onclick="addUtil()">+ Add Expense</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="bills-table" id="utilsTable">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Name</th>
+            <th style="text-align:right;">Amount / Mo</th>
+            <th style="width:110px; text-align:center;">Due Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="utilsBody"></tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            <td style="text-align:right;" id="u_footTotal">$0.00</td>
+            <td></td><td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div id="noUtilsMsg" style="text-align:center;color:var(--text-muted);padding:20px 0;font-size:13px;">
+      No fixed expenses yet — click <strong>+ Add Expense</strong> to add utilities, rent, etc.
+    </div>
+  </div>
+
+  <!-- Payoff strategies -->
+  <div class="card" id="strategySection" style="display:none;">
+    <h2>Payoff Strategies</h2>
+    <div id="winnerBanner" class="winner-banner" style="margin-bottom:14px;"></div>
+    <div class="strategy-grid">
+      <div class="strategy-card" id="avalancheCard">
+        <div class="strategy-title">🏔 Avalanche</div>
+        <div class="strategy-sub">Highest interest rate first — saves the most money</div>
+        <div class="strategy-stat"><span class="strategy-stat-lbl">Total Interest Paid</span><span class="strategy-stat-val red" id="av_interest">—</span></div>
+        <div class="strategy-stat"><span class="strategy-stat-lbl">Months to Debt Free</span><span class="strategy-stat-val" id="av_months">—</span></div>
+        <div class="strategy-stat"><span class="strategy-stat-lbl">Debt Free Date</span><span class="strategy-stat-val" id="av_date">—</span></div>
+        <div class="payoff-order" id="av_order"></div>
+      </div>
+      <div class="strategy-card" id="snowballCard">
+        <div class="strategy-title">⛄ Snowball</div>
+        <div class="strategy-sub">Lowest balance first — fastest psychological wins</div>
+        <div class="strategy-stat"><span class="strategy-stat-lbl">Total Interest Paid</span><span class="strategy-stat-val red" id="sb_interest">—</span></div>
+        <div class="strategy-stat"><span class="strategy-stat-lbl">Months to Debt Free</span><span class="strategy-stat-val" id="sb_months">—</span></div>
+        <div class="strategy-stat"><span class="strategy-stat-lbl">Debt Free Date</span><span class="strategy-stat-val" id="sb_date">—</span></div>
+        <div class="payoff-order" id="sb_order"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="noBillsMsg" class="card" style="text-align:center; color:var(--text-muted); padding:40px;">
+    No bills yet — click <strong>+ Add Bill</strong> to get started.
+  </div>
+
+</div><!-- end tab-bills -->
+
+<script>
+// =====================================================================
+// DATA
+// =====================================================================
+let k401Mode = 'pct';
+
+const depData = [
+  { name:'Upstart',   full:108,  per:54   },
+  { name:'Cap1',      full:204,  per:102  },
+  { name:'Cap2',      full:60,   per:30   },
+  { name:'Cap3',      full:240,  per:120  },
+  { name:'Cred1',     full:63,   per:31.5 },
+  { name:'Cred2',     full:30,   per:15   },
+  { name:'MissionLn', full:39,   per:19.5 }, // kept for future bills feature
+  { name:'Barclay',   full:12,   per:6    },
+  { name:'Apple',     full:35,   per:17.5 },
+  { name:'Extra',     full:109,  per:54.5 },
+];
+
+// =====================================================================
+// 2024 IRS FEDERAL TAX (Annualized Percentage Method)
+// =====================================================================
+// 2025 IRS Publication 15-T — standard deductions & tax brackets
+const STD_DED = { single:15000, mfj:30000, hoh:22500 };
+
+const BRACKETS = {
+  single: [
+    [0,       11925,  0,          0.10],
+    [11925,   48475,  1192.50,    0.12],
+    [48475,   103350, 5578.50,    0.22],
+    [103350,  197300, 17651.00,   0.24],
+    [197300,  250525, 40199.00,   0.32],
+    [250525,  626350, 57231.00,   0.35],
+    [626350,  Infinity, 188769.75, 0.37],
+  ],
+  mfj: [
+    [0,       23850,  0,          0.10],
+    [23850,   96950,  2385.00,    0.12],
+    [96950,   206700, 11157.00,   0.22],
+    [206700,  394600, 35302.00,   0.24],
+    [394600,  501050, 80398.00,   0.32],
+    [501050,  751600, 114462.00,  0.35],
+    [751600,  Infinity, 202154.50, 0.37],
+  ],
+  hoh: [
+    [0,       17000,  0,          0.10],
+    [17000,   64850,  1700.00,    0.12],
+    [64850,   103350, 7442.00,    0.22],
+    [103350,  197300, 15912.00,   0.24],
+    [197300,  250500, 38460.00,   0.32],
+    [250500,  626350, 55484.00,   0.35],
+    [626350,  Infinity, 187031.50, 0.37],
+  ],
+};
+
+function annualFedTax(taxableIncome, status) {
+  if (taxableIncome <= 0) return 0;
+  const b = BRACKETS[status] || BRACKETS.single;
+  for (const [lo, hi, base, rate] of b) {
+    if (taxableIncome <= hi) return base + (taxableIncome - lo) * rate;
+  }
+  return 0;
+}
+
+// =====================================================================
+// CALCULATE
+// =====================================================================
+function calc() {
+  const base      = +v('baseRate')   || 0;
+  const pp        = +v('payFreq')    || 26;
+  const status    = v('filingStatus') || 'single';
+  const depCred   = +v('depCredits') || 0;
+  const addlFed   = +v('addlFed')    || 0;
+  const stateRate = (+v('stateRate') || 0) / 100;
+  const cityRate  = (+v('cityRate')  || 0) / 100;
+
+  const regHrs = +v('regHrs') || 0;
+  const ptoHrs = +v('ptoHrs') || 0;
+  const otHrs  = +v('otHrs')  || 0;
+  const dtHrs  = +v('dtHrs')  || 0;
+
+  const otR = base * 1.5;
+  const dtR = base * 2;
+
+  set('regRate',  base.toFixed(2));
+  set('ptoRate',  base.toFixed(2));
+  set('otRate',   otR.toFixed(2));
+  set('dtRate',   dtR.toFixed(2));
+
+  const regPay = regHrs * base;
+  const ptoPay = ptoHrs * base;
+  const otPay  = otHrs  * otR;
+  const dtPay  = dtHrs  * dtR;
+  const gross  = regPay + ptoPay + otPay + dtPay;
+
+  // Pre-tax deductions
+  const k401Pct   = (+v('k401PctVal')   || 0) / 100;
+  const k401Fixed = +v('k401FixedVal')  || 0;
+  const k401      = k401Mode === 'pct' ? gross * k401Pct : k401Fixed;
+  const medical   = +v('medical') || 0;
+  const hsa       = +v('hsa')     || 0;
+  const dental    = +v('dental')  || 0;
+  const vision    = +v('vision')  || 0;
+  const fsa       = +v('fsa')     || 0;
+  const lifePre   = +v('lifePre') || 0;
+  const totalPre  = k401 + medical + hsa + dental + vision + fsa + lifePre;
+
+  // Taxable for FICA and income tax
+  const ficaTaxable = gross - totalPre;
+
+  // FICA
+  const oasdi   = ficaTaxable * 0.062;
+  const medicare = ficaTaxable * 0.0145;
+
+  // Federal income tax (annualized method)
+  const annualTaxable = ficaTaxable * pp;
+  const stdDed = STD_DED[status] || 14600;
+  const agi = Math.max(0, annualTaxable - stdDed);
+  const annualFed = Math.max(0, annualFedTax(agi, status) - depCred);
+  const federal = annualFed / pp + addlFed;
+
+  // State / City
+  const stateTax = ficaTaxable * stateRate;
+  const cityTax  = ficaTaxable * cityRate;
+
+  const totalTax = oasdi + medicare + federal + stateTax + cityTax;
+
+  // Post-tax deductions
+  const addlLife = +v('addlLife') || 0;
+  const hospInd  = +v('hospInd')  || 0;
+  const supplLtd = +v('supplLtd') || 0;
+  const volAcc   = +v('volAcc')   || 0;
+  const volCrit  = +v('volCrit')  || 0;
+  const totalPost = addlLife + hospInd + supplLtd + volAcc + volCrit;
+
+  const net = gross - totalPre - totalTax - totalPost;
+  const effFedRate = gross > 0 ? (federal / gross * 100).toFixed(1) : '0.0';
+
+  // OT Tax Exemption — marginal federal tax attributable to OT pay
+  const otPayTotal = otPay + dtPay;
+  const agiNoOT = Math.max(0, (ficaTaxable - otPayTotal) * pp - stdDed);
+  const fedNoOT = Math.max(0, annualFedTax(agiNoOT, status) - depCred) / pp;
+  const otFedSaved = Math.max(0, federal - addlFed - fedNoOT);
+  // YTD: current period + archived history
+  const ytdOTPay = otPayTotal + otHistory.reduce((s, e) => s + (e.hours || 0) * (e.rate || 0) * 1.5, 0);
+  const marginalOTRate = otPayTotal > 0 ? otFedSaved / otPayTotal : 0;
+  currentOTMarginalRate = marginalOTRate;
+  const ytdOTTax = ytdOTPay * marginalOTRate;
+  setText('oe_otPay',      fmt(otPayTotal));
+  setText('oe_savedThis',  fmt(otFedSaved));
+  setText('oe_annualSaved',fmt(otFedSaved * pp));
+  setText('oe_ytdOTPay',   fmt(ytdOTPay));
+  setText('oe_ytdTaxCol',  fmt(ytdOTTax));
+  setText('oe_ytdTax',     fmt(ytdOTTax));
+  setText('oe_refund',     fmt(ytdOTTax));
+
+  // Refund estimates using real pay stub YTD numbers
+  const periodsYTD    = Math.max(1, Math.min(26, +v('oe_periodsYTD') || 1));
+  const remainingPeriods = Math.max(0, 26 - periodsYTD);
+  const ytdGrossInput = parseFloat(document.getElementById('oe_ytdGross')?.value) || 0;
+  const ytdFedInput   = parseFloat(document.getElementById('oe_ytdFedWithheld')?.value) || 0;
+  const ytdStateInput = parseFloat(document.getElementById('oe_ytdStateWithheld')?.value) || 0;
+  const hasStubData   = ytdFedInput > 0 || ytdGrossInput > 0;
+
+  const regEl   = document.getElementById('oe_regRefund');
+  const noteEl  = document.getElementById('oe_regRefundNote');
+  const stateEl = document.getElementById('oe_stateRefund');
+  const stateNoteEl = document.getElementById('oe_stateRefundNote');
+  const totEl   = document.getElementById('oe_totalRefund');
+  const totNoteEl = document.getElementById('oe_totalRefundNote');
+
+  if (hasStubData) {
+    // Project full-year withholding: real YTD + remaining periods at current rate
+    const projFedWithheld   = ytdFedInput   + remainingPeriods * (federal - addlFed) + addlFed * 26;
+    const projStateWithheld = ytdStateInput + remainingPeriods * stateTax;
+
+    // Project full-year gross income
+    const projGross = ytdGrossInput > 0
+      ? ytdGrossInput + remainingPeriods * ficaTaxable
+      : ficaTaxable * 26; // fallback if user didn't fill gross
+    const projAGI = Math.max(0, projGross - stdDed);
+    const projFedTax   = Math.max(0, annualFedTax(projAGI, status) - depCred);
+    const projStateTax = projGross * stateRate; // flat-rate state estimate
+
+    const regRefund   = projFedWithheld - projFedTax;
+    const stateRefund = projStateWithheld - projStateTax;
+    const totalRefund = ytdOTTax + regRefund + stateRefund;
+
+    const setRefundEl = (el, nEl, val, suffix) => {
+      if (!el) return;
+      el.textContent = (val >= 0 ? '+' : '-') + fmt(Math.abs(val));
+      el.className = 'ot-refund-val ' + (val >= 0 ? 'green' : 'red');
+      if (nEl) nEl.textContent = (val >= 0 ? 'refund' : 'owed') + (suffix ? ' · ' + suffix : '');
+    };
+    setRefundEl(regEl,   noteEl,      regRefund,   'federal');
+    setRefundEl(stateEl, stateNoteEl, stateRefund, 'state');
+    setRefundEl(totEl,   totNoteEl,   totalRefund, 'OT exempt + fed + state');
+  } else {
+    // No stub data — show placeholder
+    [regEl, stateEl, totEl].forEach(el => { if (el) { el.textContent = '—'; el.className = 'ot-refund-val'; } });
+    if (noteEl)      noteEl.textContent      = 'enter YTD figures above';
+    if (stateNoteEl) stateNoteEl.textContent = 'enter YTD figures above';
+    if (totNoteEl)   totNoteEl.textContent   = 'enter YTD figures above';
+  }
+
+  updateCurrentPeriodRow();
+
+  // ---- Update DOM ----
+  const netEl = document.getElementById('netVal');
+  netEl.textContent = fmt(net);
+  netEl.className = 'net-val' + (net < 0 ? ' neg' : '');
+
+  setText('monthlyVal', fmt(net * 2));
+  setText('annualVal',  fmt(net * pp));
+  setText('ppLbl', pp);
+
+  setText('d_regHrs', regHrs); setText('d_regPay', fmt(regPay));
+  setText('d_ptoHrs', ptoHrs); setText('d_ptoPay', fmt(ptoPay));
+  setText('d_otHrs',  otHrs);  setText('d_otPay',  fmt(otPay));
+  setText('d_dtHrs',  dtHrs);  setText('d_dtPay',  fmt(dtPay));
+  setText('d_gross',  fmt(gross));
+  setText('d_annual', fmt(gross * pp));
+
+  setText('d_oasdi',   fmt(oasdi));
+  setText('d_medicare',fmt(medicare));
+  setText('d_federal', fmt(federal));
+  setText('d_fedBadge', '~' + effFedRate + '%');
+  setText('d_state',   fmt(stateTax));
+  setText('d_stateBadge', (stateRate * 100).toFixed(3) + '%');
+  setText('d_city',    fmt(cityTax));
+  setText('d_cityBadge',  (cityRate  * 100).toFixed(3) + '%');
+  setText('d_totalTax', fmt(totalTax));
+
+  setText('d_401k',    fmt(k401));
+  setText('d_medical', fmt(medical));
+  setText('d_hsa',     fmt(hsa));
+  setText('d_dental',  fmt(dental));
+  setText('d_vision',  fmt(vision));
+  setText('d_fsa',     fmt(fsa));
+  setText('d_lifePre', fmt(lifePre));
+  setText('d_totalPre', fmt(totalPre));
+
+  setText('d_addlLife', fmt(addlLife));
+  setText('d_hospInd',  fmt(hospInd));
+  setText('d_supplLtd', fmt(supplLtd));
+  setText('d_volAcc',   fmt(volAcc));
+  setText('d_volCrit',  fmt(volCrit));
+  setText('d_totalPost', fmt(totalPost));
+
+  saveState();
+}
+
+// =====================================================================
+// 401k TOGGLE
+// =====================================================================
+function setK401(mode) {
+  k401Mode = mode;
+  const btns = document.querySelectorAll('#k401Toggle button');
+  btns.forEach(b => b.classList.remove('on'));
+  btns[mode === 'pct' ? 0 : 1].classList.add('on');
+  document.getElementById('k401Pct').style.display   = mode === 'pct'   ? '' : 'none';
+  document.getElementById('k401Fixed').style.display = mode === 'fixed' ? '' : 'none';
+  calc();
+}
+
+// =====================================================================
+// HELPERS
+// =====================================================================
+function v(id)   { return document.getElementById(id)?.value ?? 0; }
+function set(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function esc(s)  { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+function fmt(n)  {
+  const abs = Math.abs(n);
+  const s = abs.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  return (n < 0 ? '-' : '') + '$' + s;
+}
+
+// =====================================================================
+// HOURS TRACKER
+// =====================================================================
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let htHours       = new Array(14).fill(0); // index 0-6 = week1, 7-13 = week2
+let htPTO         = new Array(14).fill(0); // per-day PTO hours (paid at reg rate, doesn't trigger OT)
+let htPeriodStart = null;                  // Date object for day-0 of current pay period
+
+function getPeriodDates(payDateStr) {
+  // Period end = pay date - 4 days; period start = end - 13 days (14 days total)
+  const pay = new Date(payDateStr + 'T00:00:00');
+  const end = new Date(pay); end.setDate(end.getDate() - 4);
+  const start = new Date(end); start.setDate(start.getDate() - 13);
+  return { start, end };
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+
+function fmtDateShort(d) {
+  return (d.getMonth()+1) + '/' + d.getDate();
+}
+
+function buildHoursGrid() {
+  const payDateStr = document.getElementById('payDate').value;
+  if (!payDateStr) return;
+
+  const { start, end } = getPeriodDates(payDateStr);
+  const newPeriodStartStr = start.toISOString().slice(0, 10);
+
+  // Auto-archive previous period when pay date advances to a new period
+  if (htPeriodStart) {
+    const oldStartStr = htPeriodStart.toISOString().slice(0, 10);
+    if (oldStartStr !== newPeriodStartStr && lastArchivedPeriodStart !== oldStartStr) {
+      const prevOTHrs = +v('otHrs') || 0;
+      const prevRate  = +v('baseRate') || 0;
+      if (prevOTHrs > 0) {
+        otHistory.push({ date: oldStartStr, hours: prevOTHrs, rate: prevRate });
+        lastArchivedPeriodStart = oldStartStr;
+        renderOTHistory();
+        debounceBillSave();
+      } else {
+        lastArchivedPeriodStart = oldStartStr;
+      }
+    }
+  }
+
+  // Period display
+  const payFmt = new Date(payDateStr + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('htPeriodDisplay').innerHTML =
+    `Pay period: <strong>${fmtDate(start)} – ${fmtDate(end)}</strong> &nbsp;·&nbsp; Pay date: <strong>${payFmt}</strong>`;
+
+  // Build 14 day array
+  const days = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    days.push(d);
+  }
+
+  // Week labels
+  document.getElementById('htWeek1Label').textContent =
+    `Week 1 — ${fmtDate(days[0])} to ${fmtDate(days[6])}`;
+  document.getElementById('htWeek2Label').textContent =
+    `Week 2 — ${fmtDate(days[7])} to ${fmtDate(days[13])}`;
+
+  htPeriodStart = new Date(start);
+  renderWeek('htWeek1', days.slice(0, 7), 0);
+  renderWeek('htWeek2', days.slice(7, 14), 7);
+  populateDaySelect(days);
+  updateHTTotals();
+}
+
+function renderWeek(gridId, days, offset) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  days.forEach((d, i) => {
+    const idx = offset + i;
+    const dow = d.getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const hrs = htHours[idx] || 0;
+    const pto = htPTO[idx]   || 0;
+
+    const cell = document.createElement('div');
+    cell.className = 'ht-day' + (isWeekend ? ' weekend' : '') + (hrs > 0 ? ' has-hours' : '') + (pto > 0 ? ' has-pto' : '');
+    cell.innerHTML = `
+      <div class="ht-dayname">${DAY_NAMES[dow]}</div>
+      <div class="ht-date">${fmtDateShort(d)}</div>
+      <input type="number" min="0" max="24" step="0.25"
+        value="${hrs || ''}" placeholder="0"
+        oninput="htHours[${idx}]=parseFloat(this.value)||0; this.closest('.ht-day').classList.toggle('has-hours', htHours[${idx}]>0); updateHTTotals(); saveState();">
+      <div class="ht-pto-row">
+        <span class="ht-pto-label">PTO</span>
+        <input type="number" min="0" max="24" step="0.25"
+          value="${pto || ''}" placeholder="0"
+          oninput="htPTO[${idx}]=parseFloat(this.value)||0; this.closest('.ht-day').classList.toggle('has-pto', htPTO[${idx}]>0); updateHTTotals(); saveState();">
+      </div>
+    `;
+    grid.appendChild(cell);
+  });
+}
+
+function updateHTTotals() {
+  // Worked hours (OT applies only to these)
+  const w1 = htHours.slice(0, 7).reduce((s,h) => s+h, 0);
+  const w2 = htHours.slice(7, 14).reduce((s,h) => s+h, 0);
+  // PTO hours (paid at regular rate, never trigger OT)
+  const p1 = htPTO.slice(0, 7).reduce((s,h) => s+h, 0);
+  const p2 = htPTO.slice(7, 14).reduce((s,h) => s+h, 0);
+  const totalPTO = p1 + p2;
+
+  const w1reg = Math.min(w1, 40);
+  const w1ot  = Math.max(0, w1 - 40);
+  const w2reg = Math.min(w2, 40);
+  const w2ot  = Math.max(0, w2 - 40);
+
+  const totalWorkedReg = w1reg + w2reg;
+  const totalOT        = w1ot  + w2ot;
+  const totalHrs       = w1 + w2 + totalPTO;
+
+  // Hours worked so far (days up to and including today)
+  let soFarHrs = 0;
+  if (htPeriodStart) {
+    const todayMs = new Date().setHours(0,0,0,0);
+    for (let i = 0; i < 14; i++) {
+      const dayMs = new Date(htPeriodStart).setDate(htPeriodStart.getDate() + i);
+      if (dayMs <= todayMs) soFarHrs += (htHours[i] || 0) + (htPTO[i] || 0);
+    }
+  }
+
+  document.getElementById('htTotalHrs').textContent  = totalHrs.toFixed(2).replace(/\.00$/,'');
+  document.getElementById('htRegHrs').textContent    = (totalWorkedReg + totalPTO).toFixed(2).replace(/\.00$/,'');
+  document.getElementById('htOTHrs').textContent     = totalOT.toFixed(2).replace(/\.00$/,'');
+  document.getElementById('htPTOHrs').textContent    = totalPTO.toFixed(2).replace(/\.00$/,'');
+  document.getElementById('htSoFarHrs').textContent  = soFarHrs.toFixed(2).replace(/\.00$/,'');
+
+  // Auto-fill pay calculator inputs — reg includes worked regular + PTO (both at base rate)
+  const regInput = document.getElementById('regHrs');
+  const otInput  = document.getElementById('otHrs');
+  const ptoInput = document.getElementById('ptoHrs');
+  if (regInput) regInput.value = totalWorkedReg;
+  if (otInput)  otInput.value  = totalOT;
+  if (ptoInput) ptoInput.value = totalPTO;
+
+  calc();
+}
+
+// =====================================================================
+// TIME CALCULATOR
+// =====================================================================
+let tcCalculatedHours = null;
+
+function timeToMins(val) {
+  if (!val) return null;
+  const [h, m] = val.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function calcTime() {
+  const inM       = timeToMins(document.getElementById('tcIn').value);
+  const lunchOutM = timeToMins(document.getElementById('tcLunchOut').value);
+  const lunchInM  = timeToMins(document.getElementById('tcLunchIn').value);
+  const outM      = timeToMins(document.getElementById('tcOut').value);
+
+  const resultEl = document.getElementById('tcHours');
+  const applyBtn = document.getElementById('tcApplyBtn');
+
+  // Need at minimum clock-in and clock-out
+  if (inM === null || outM === null || outM <= inM) {
+    resultEl.textContent = '—';
+    resultEl.style.color = 'var(--text-muted)';
+    tcCalculatedHours = null;
+    applyBtn.disabled = true;
+    return;
+  }
+
+  let totalMins = outM - inM;
+
+  // Subtract lunch if both lunch times provided
+  if (lunchOutM !== null && lunchInM !== null && lunchInM > lunchOutM) {
+    totalMins -= (lunchInM - lunchOutM);
+  }
+
+  if (totalMins <= 0) {
+    resultEl.textContent = '—';
+    resultEl.style.color = 'var(--text-muted)';
+    tcCalculatedHours = null;
+    applyBtn.disabled = true;
+    return;
+  }
+
+  const hrs = totalMins / 60;
+  tcCalculatedHours = Math.round(hrs * 4) / 4; // round to nearest 0.25
+  resultEl.textContent = tcCalculatedHours % 1 === 0
+    ? tcCalculatedHours.toFixed(0)
+    : tcCalculatedHours.toFixed(2);
+  resultEl.style.color = 'var(--green)';
+  applyBtn.disabled = false;
+  saveState();
+}
+
+function populateDaySelect(days) {
+  const sel = document.getElementById('tcDaySelect');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '';
+  const DAY_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  days.forEach((d, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = DAY_FULL[d.getDay()] + ' ' + fmtDateShort(d);
+    sel.appendChild(opt);
+  });
+  // Restore selection or default to today if present
+  const today = new Date();
+  let matched = false;
+  [...sel.options].forEach(o => {
+    const d = days[+o.value];
+    if (d && d.toDateString() === today.toDateString()) { sel.value = o.value; matched = true; }
+  });
+  if (!matched && prev) sel.value = prev;
+}
+
+function applyTimeToDay() {
+  if (tcCalculatedHours === null) return;
+  const idx = parseInt(document.getElementById('tcDaySelect').value);
+  if (isNaN(idx)) return;
+
+  htHours[idx] = tcCalculatedHours;
+
+  // Update the rendered input cell directly
+  const allDayInputs = document.querySelectorAll('.ht-day input[type="number"]');
+  if (allDayInputs[idx]) {
+    allDayInputs[idx].value = tcCalculatedHours;
+    allDayInputs[idx].closest('.ht-day').classList.add('has-hours');
+  }
+
+  updateHTTotals();
+  saveState();
+}
+
+// =====================================================================
+// PERSIST — MongoDB via local API server (http://localhost:3001)
+// =====================================================================
+const API = 'http://localhost:3001/api';
+const PROFILE = 'default';
+
+const PERSIST_IDS = [
+  'baseRate','payFreq','filingStatus','depCredits','addlFed','stateRate','cityRate',
+  'regHrs','ptoHrs','otHrs','dtHrs',
+  'k401PctVal','k401FixedVal',
+  'medical','hsa','dental','vision','fsa','lifePre',
+  'addlLife','hospInd','supplLtd','volAcc','volCrit',
+  'payDate',
+  'tcIn','tcLunchOut','tcLunchIn','tcOut','tcDaySelect',
+];
+
+let saveTimer;
+function saveState() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    const fields = {};
+    PERSIST_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) fields[id] = el.value;
+    });
+    const state = { fields, k401Mode, htHours: [...htHours], htPTO: [...htPTO] };
+    console.log('[SAVE] Sending state to server:', { payDate: fields.payDate, htHours: state.htHours });
+    try {
+      const res  = await fetch(`${API}/state/${PROFILE}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state),
+      });
+      const json = await res.json();
+      console.log('[SAVE] Server response:', json);
+      if (json.ok) showSaved();
+      else showError('Save error: ' + json.error);
+    } catch (e) {
+      console.error('[SAVE] Fetch failed:', e);
+      showError('Save failed — is the server running?');
+    }
+  }, 600);
+}
+
+let savedTimer;
+function showSaved() {
+  const el = document.getElementById('saveIndicator');
+  if (!el) return;
+  el.textContent = '✓ Saved';
+  el.style.color = 'var(--green)';
+  el.style.opacity = '1';
+  clearTimeout(savedTimer);
+  savedTimer = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+function showError(msg) {
+  const el = document.getElementById('saveIndicator');
+  if (!el) return;
+  el.textContent = '⚠ ' + msg;
+  el.style.color = 'var(--red)';
+  el.style.opacity = '1';
+}
+
+async function loadState() {
+  try {
+    const res   = await fetch(`${API}/state/${PROFILE}`);
+    const { ok, state } = await res.json();
+    if (!ok || !state) return false;
+
+    // Restore htHours/htPTO first so any calc() triggered below uses correct data
+    if (Array.isArray(state.htHours) && state.htHours.length === 14) {
+      htHours = state.htHours;
+    }
+    if (Array.isArray(state.htPTO) && state.htPTO.length === 14) {
+      htPTO = state.htPTO;
+    }
+    if (state.fields) {
+      PERSIST_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && state.fields[id] !== undefined) el.value = state.fields[id];
+      });
+    }
+    if (state.k401Mode) setK401(state.k401Mode);
+    return true;
+  } catch (e) {
+    showError('Server not reachable — changes won\'t be saved');
+    return false;
+  }
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+document.querySelectorAll('input:not([readonly]), select').forEach(el => {
+  el.addEventListener('input', () => { calc(); saveState(); });
+});
+
+// Sync PTO display when ptoHrs changes
+document.getElementById('ptoHrs')?.addEventListener('input', () => {
+  const pto = parseFloat(document.getElementById('ptoHrs').value) || 0;
+  document.getElementById('htPTOHrs').textContent = pto.toFixed(2).replace(/\.00$/,'');
+});
+
+(async () => {
+  await Promise.all([loadState(), loadBills()]);
+  buildHoursGrid();
+  renderBills();
+  renderUtils();
+  renderOTHistory();
+  calcTime();
+  calc();
+  calcBills();
+  console.log('[INIT] Ready');
+})();
+
+// =====================================================================
+// TAB SWITCHING
+// =====================================================================
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.toLowerCase().includes(name === 'paycheck' ? 'paycheck' : 'bill'))
+      b.classList.add('active');
+  });
+  if (name === 'bills') calcBills();
+}
+
+// =====================================================================
+// BILLS DATA & PERSISTENCE
+// =====================================================================
+let billsData = [];
+let utilsData  = [];
+let keepSelfVal = 200;
+let otHistory  = [];  // [{ date, hours, rate }]
+let lastArchivedPeriodStart = null;
+let currentOTMarginalRate = 0; // set in calc(), used in renderOTHistory
+
+async function saveBills() {
+  const baseHours = parseFloat(document.getElementById('billsBaseHours')?.value) || 80;
+  keepSelfVal     = parseFloat(document.getElementById('keepSelf')?.value) || 0;
+  try {
+    const res  = await fetch(`${API}/bills/${PROFILE}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bills: billsData, utils: utilsData, keepSelf: keepSelfVal, baseHours, otHistory, lastArchivedPeriodStart,
+        oe_periodsYTD: +v('oe_periodsYTD') || 1,
+        oe_ytdGross: parseFloat(document.getElementById('oe_ytdGross')?.value) || 0,
+        oe_ytdFedWithheld: parseFloat(document.getElementById('oe_ytdFedWithheld')?.value) || 0,
+        oe_ytdStateWithheld: parseFloat(document.getElementById('oe_ytdStateWithheld')?.value) || 0,
+      }),
+    });
+    const json = await res.json();
+    if (json.ok) showSaved();
+    else showError('Bills save error: ' + json.error);
+  } catch(e) {
+    console.error('[BILLS SAVE]', e);
+    showError('Save failed — is the server running?');
+  }
+}
+
+async function loadBills() {
+  try {
+    const res  = await fetch(`${API}/bills/${PROFILE}`);
+    const json = await res.json();
+    if (!json.ok || !json.state) return;
+    if (Array.isArray(json.state.bills)) {
+      // Migrate starred→priority if needed; ensure required fields exist
+      billsData = json.state.bills.map(b => ({
+        priority: b.starred ? 1 : 0,
+        currentPayment: 0,
+        ...b,
+        starred: undefined,
+      }));
+    }
+    if (Array.isArray(json.state.utils)) {
+      utilsData = json.state.utils.map(u => ({ name: '', amount: 0, dueDay: '', ...u }));
+    }
+    if (json.state.keepSelf !== undefined) {
+      keepSelfVal = json.state.keepSelf;
+      const el = document.getElementById('keepSelf');
+      if (el) el.value = keepSelfVal;
+    }
+    if (json.state.baseHours !== undefined) {
+      const el = document.getElementById('billsBaseHours');
+      if (el) el.value = json.state.baseHours;
+    }
+    if (Array.isArray(json.state.otHistory)) {
+      otHistory = json.state.otHistory.map(e => ({ date: '', hours: 0, rate: 0, ...e }));
+    }
+    if (json.state.lastArchivedPeriodStart !== undefined) {
+      lastArchivedPeriodStart = json.state.lastArchivedPeriodStart;
+    }
+    const setField = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    setField('oe_periodsYTD',       json.state.oe_periodsYTD);
+    setField('oe_ytdGross',         json.state.oe_ytdGross);
+    setField('oe_ytdFedWithheld',   json.state.oe_ytdFedWithheld);
+    setField('oe_ytdStateWithheld', json.state.oe_ytdStateWithheld);
+  } catch(e) {
+    console.error('[BILLS LOAD]', e);
+  }
+}
+
+// =====================================================================
+// OT HISTORY CRUD
+// =====================================================================
+function addOTEntry() {
+  const today = new Date().toISOString().slice(0, 10);
+  otHistory.push({ date: today, hours: 0, rate: 0 });
+  renderOTHistory();
+  calc();
+  debounceBillSave();
+}
+
+function removeOTEntry(i) {
+  otHistory.splice(i, 1);
+  renderOTHistory();
+  calc();
+  debounceBillSave();
+}
+
+function otFmt(n) {
+  return '$' + (+n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function updateCurrentPeriodRow() {
+  const row = document.getElementById('ot_curr_row');
+  if (!row) return;
+  const otHrs = +v('otHrs')    || 0;
+  const rate  = +v('baseRate') || 0;
+  const otPay = otHrs * rate * 1.5;
+  const fed   = otPay * currentOTMarginalRate;
+  let periodLabel = '—';
+  if (htPeriodStart) {
+    const end = new Date(htPeriodStart);
+    end.setDate(end.getDate() + 13);
+    periodLabel = fmtDate(htPeriodStart) + ' – ' + fmtDate(end);
+  }
+  row.cells[0].textContent = periodLabel;
+  row.cells[1].textContent = otHrs || '—';
+  row.cells[2].textContent = rate ? '$' + rate.toFixed(2) : '—';
+  row.cells[3].textContent = otFmt(otPay);
+  row.cells[4].textContent = otFmt(fed);
+}
+
+function updateOTRowPay(i) {
+  const otPay = (otHistory[i].hours || 0) * (otHistory[i].rate || 0) * 1.5;
+  const payEl = document.getElementById('oe_rowPay_' + i);
+  const fedEl = document.getElementById('oe_rowFed_' + i);
+  if (payEl) payEl.textContent = otFmt(otPay);
+  if (fedEl) fedEl.textContent = otFmt(otPay * currentOTMarginalRate);
+}
+
+function renderOTHistory() {
+  const tbody = document.getElementById('otHistBody');
+  if (!tbody) return;
+  // Current period row (always first, read-only, updated live via updateCurrentPeriodRow)
+  const currRow = `<tr id="ot_curr_row" class="ot-curr-row">
+    <td>—</td><td>—</td><td>—</td>
+    <td class="ot-hist-pay">$0.00</td>
+    <td class="ot-hist-pay">$0.00</td>
+    <td><span style="font-size:10px;color:var(--accent);font-weight:600;letter-spacing:0.04em;">CURRENT</span></td>
+  </tr>`;
+  tbody.innerHTML = currRow + otHistory.map((e, i) => {
+    const otPay = (e.hours || 0) * (e.rate || 0) * 1.5;
+    const fedTax = otPay * currentOTMarginalRate;
+    return `<tr>
+      <td><input type="date" value="${e.date || ''}" oninput="otHistory[${i}].date=this.value;debounceBillSave()"></td>
+      <td><input type="number" value="${e.hours || 0}" min="0" step="0.25"
+          oninput="otHistory[${i}].hours=+this.value;updateOTRowPay(${i});calc();debounceBillSave()"></td>
+      <td><input type="number" value="${e.rate || 0}" min="0" step="0.01"
+          oninput="otHistory[${i}].rate=+this.value;updateOTRowPay(${i});calc();debounceBillSave()"></td>
+      <td class="ot-hist-pay" id="oe_rowPay_${i}">${otFmt(otPay)}</td>
+      <td class="ot-hist-fedtax" id="oe_rowFed_${i}">${otFmt(fedTax)}</td>
+      <td><button class="ot-hist-del" onclick="removeOTEntry(${i})" title="Remove">×</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// =====================================================================
+// BILLS CRUD
+// =====================================================================
+function addBill() {
+  billsData.push({ name: '', balance: 0, currentPayment: 0, minPayment: 0, apr: 0, priority: 0 });
+  renderBills();
+  const rows = document.querySelectorAll('#billsBody tr');
+  const last = rows[rows.length - 1];
+  if (last) last.querySelectorAll('input')[1].focus();
+}
+
+function removeBill(i) {
+  billsData.splice(i, 1);
+  renderBills();
+  calcBills();
+  saveBills();
+}
+
+function renderBills() {
+  const tbody = document.getElementById('billsBody');
+  tbody.innerHTML = '';
+  billsData.forEach((b, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center; padding:4px;">
+        <input type="number" min="1" max="99" step="1" placeholder="—"
+          value="${b.priority > 0 ? b.priority : ''}"
+          title="Priority order (1 = pay first). Leave blank for no priority."
+          style="width:44px; text-align:center; font-size:13px; font-weight:600;"
+          oninput="billsData[${i}].priority=parseInt(this.value)||0; calcBills(); debounceBillSave();">
+      </td>
+      <td><input class="name-input" type="text" value="${esc(b.name)}" placeholder="e.g. Capital One"
+            oninput="billsData[${i}].name=this.value; debounceBillSave();"></td>
+      <td><input type="number" value="${b.currentPayment || ''}" min="0" step="0.01" placeholder="0.00"
+            title="Amount needed right now to get current (catch-up). Leave blank if not behind."
+            oninput="billsData[${i}].currentPayment=parseFloat(this.value)||0; calcBills(); debounceBillSave();"></td>
+      <td><input type="number" value="${b.balance || ''}" min="0" step="0.01" placeholder="0.00"
+            oninput="billsData[${i}].balance=parseFloat(this.value)||0; calcBills(); debounceBillSave();"></td>
+      <td><input type="number" value="${b.minPayment || ''}" min="0" step="0.01" placeholder="0.00"
+            oninput="billsData[${i}].minPayment=parseFloat(this.value)||0; calcBills(); debounceBillSave();"></td>
+      <td><input class="apr-input" type="number" value="${b.apr || ''}" min="0" max="100" step="0.01" placeholder="0.00"
+            oninput="billsData[${i}].apr=parseFloat(this.value)||0; calcBills(); debounceBillSave();"></td>
+      <td><button class="btn-icon" onclick="removeBill(${i})" title="Remove">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+let billSaveTimer;
+function debounceBillSave() {
+  clearTimeout(billSaveTimer);
+  billSaveTimer = setTimeout(saveBills, 800);
+}
+
+// =====================================================================
+// UTILITIES / FIXED EXPENSES
+// =====================================================================
+function addUtil() {
+  utilsData.push({ name: '', amount: 0, dueDay: '' });
+  renderUtils();
+  const rows = document.querySelectorAll('#utilsBody tr');
+  const last = rows[rows.length - 1];
+  if (last) last.querySelector('input').focus();
+}
+
+function removeUtil(i) {
+  utilsData.splice(i, 1);
+  renderUtils();
+  calcBills();
+  saveBills();
+}
+
+function renderUtils() {
+  const tbody = document.getElementById('utilsBody');
+  const noMsg = document.getElementById('noUtilsMsg');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  utilsData.forEach((u, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input class="name-input" type="text" value="${esc(u.name)}" placeholder="e.g. Electric, Rent, Netflix"
+            oninput="utilsData[${i}].name=this.value; debounceBillSave();"></td>
+      <td style="text-align:right;"><input type="number" value="${u.amount || ''}" min="0" step="0.01" placeholder="0.00"
+            oninput="utilsData[${i}].amount=parseFloat(this.value)||0; calcBills(); debounceBillSave();"></td>
+      <td style="text-align:center;">
+        <input type="number" value="${u.dueDay || ''}" min="1" max="31" step="1" placeholder="day"
+          title="Day of month this is due (e.g. 15 for the 15th)"
+          style="width:54px; text-align:center;"
+          oninput="utilsData[${i}].dueDay=parseInt(this.value)||''; debounceBillSave();">
+      </td>
+      <td><button class="btn-icon" onclick="removeUtil(${i})" title="Remove">×</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  const hasUtils = utilsData.length > 0;
+  if (noMsg) noMsg.style.display = hasUtils ? 'none' : '';
+  const tfoot = document.querySelector('#utilsTable tfoot');
+  if (tfoot) tfoot.style.display = hasUtils ? '' : 'none';
+}
+
+// =====================================================================
+// PAYOFF CALCULATOR
+// =====================================================================
+// ── Guaranteed net pay (independent of hours tracker) ───────────────
+function calcGuaranteedNet(hours) {
+  const base        = parseFloat(v('baseRate'))    || 0;
+  const pp          = parseInt(v('payFreq'))        || 26;
+  const status      = v('filingStatus')             || 'single';
+  const depCred     = parseFloat(v('depCredits'))   || 0;
+  const addlFed     = parseFloat(v('addlFed'))      || 0;
+  const stateRate   = (parseFloat(v('stateRate'))   || 0) / 100;
+  const cityRate    = (parseFloat(v('cityRate'))    || 0) / 100;
+
+  const regHrs = Math.min(hours, 80);
+  const otHrs  = Math.max(0, hours - 80);
+  const gross  = regHrs * base + otHrs * base * 1.5;
+
+  const k401Pct   = (parseFloat(v('k401PctVal'))   || 0) / 100;
+  const k401Fixed =  parseFloat(v('k401FixedVal'))  || 0;
+  const k401      = k401Mode === 'pct' ? gross * k401Pct : k401Fixed;
+  const totalPre  = k401
+    + (parseFloat(v('medical'))  || 0)
+    + (parseFloat(v('hsa'))      || 0)
+    + (parseFloat(v('dental'))   || 0)
+    + (parseFloat(v('vision'))   || 0)
+    + (parseFloat(v('fsa'))      || 0)
+    + (parseFloat(v('lifePre'))  || 0);
+
+  const taxable    = Math.max(0, gross - totalPre);
+  const oasdi      = taxable * 0.062;
+  const medicare   = taxable * 0.0145;
+  const annualAGI  = Math.max(0, taxable * pp - (STD_DED[status] || 15000));
+  const federal    = Math.max(0, annualFedTax(annualAGI, status) - depCred) / pp + addlFed;
+  const totalTax   = oasdi + medicare + federal + taxable * stateRate + taxable * cityRate;
+
+  const totalPost  = (parseFloat(v('addlLife'))  || 0)
+    + (parseFloat(v('hospInd'))  || 0)
+    + (parseFloat(v('supplLtd')) || 0)
+    + (parseFloat(v('volAcc'))   || 0)
+    + (parseFloat(v('volCrit'))  || 0);
+
+  return { net: Math.max(0, gross - totalPre - totalTax - totalPost), regHrs, otHrs };
+}
+
+// ── Payoff simulation ───────────────────────────────────────────────
+function runPayoff(bills, monthlyBudget, strategy) {
+  let active = bills
+    .filter(b => b.balance > 0)
+    .map(b => ({ ...b, remaining: b.balance, paidOffMonth: null }));
+
+  // Sort: explicit priority numbers first (ascending), then strategy
+  const withPri = active.filter(b => b.priority > 0).sort((a, b) => a.priority - b.priority);
+  const noPri   = active.filter(b => !(b.priority > 0));
+  if (strategy === 'avalanche') noPri.sort((a, b) => b.apr - a.apr);
+  else                          noPri.sort((a, b) => a.balance - b.balance);
+  active = [...withPri, ...noPri];
+
+  const phases = [];
+  let currentFocusName = null;
+  let phaseStartMonth  = 1;
+  let phasePayments    = null;
+
+  let month = 0, totalInterest = 0;
+
+  while (active.some(b => b.remaining > 0.01) && month < 600) {
+    month++;
+
+    // ── Detect focus bill BEFORE paying (so bills paid via catch-up appear in their phase)
+    const target = active.find(b => b.remaining > 0.01);
+    if (target && target.name !== currentFocusName) {
+      if (currentFocusName !== null && phasePayments) {
+        phases.push({ focusBillName: currentFocusName, startMonth: phaseStartMonth, endMonth: month - 1, payments: phasePayments });
+      }
+      currentFocusName = target.name;
+      phaseStartMonth  = month;
+      const isFirst  = (month === 1);
+      // Simulate this month's actual payments (minimums + cascade) for accurate display
+      const allActive = active.filter(b => b.remaining > 0.01);
+      let snapBudget  = monthlyBudget;
+      // Step 1: minimums / catch-ups
+      const snap = allActive.map(b => {
+        const due  = (isFirst && b.currentPayment > 0) ? b.currentPayment : b.minPayment;
+        const pay  = Math.min(due, b.remaining, snapBudget);
+        snapBudget -= pay;
+        return { name: b.name, amount: pay, remAfterMin: b.remaining - pay,
+                 catchUp: (isFirst && b.currentPayment > 0 && b.currentPayment > b.minPayment) ? b.currentPayment : null,
+                 minPayment: b.minPayment, isFocus: false };
+      });
+      // Step 2: cascade extra in priority order
+      let cascadeRem = snapBudget;
+      for (const p of snap) {
+        if (cascadeRem <= 0.01) break;
+        if (p.remAfterMin > 0.01) {
+          const extra = Math.min(cascadeRem, p.remAfterMin);
+          p.amount    += extra;
+          cascadeRem  -= extra;
+          if (!snap.some(s => s.isFocus)) p.isFocus = true;
+        }
+      }
+      phasePayments = snap.map(({ remAfterMin, ...rest }) => rest);
+    }
+
+    // ── Accrue monthly interest ──────────────────────────────────────
+    active.forEach(b => {
+      if (b.remaining > 0.01) {
+        const interest = b.remaining * (b.apr / 100 / 12);
+        totalInterest += interest;
+        b.remaining  += interest;
+      }
+    });
+
+    // ── Pay minimums (or catch-up on month 1) on every active bill ──
+    let budget = monthlyBudget;
+    active.forEach(b => {
+      if (b.remaining > 0.01) {
+        const due    = (month === 1 && b.currentPayment > 0) ? b.currentPayment : b.minPayment;
+        const pay    = Math.min(due, b.remaining, budget);
+        b.remaining -= pay;
+        budget       = Math.max(0, budget - pay);
+      }
+    });
+
+    // ── Extra cascades down priority list until budget is exhausted ──
+    {
+      let rem = budget, t;
+      while (rem > 0.01 && (t = active.find(b => b.remaining > 0.01))) {
+        const pay = Math.min(rem, t.remaining);
+        t.remaining -= pay;
+        rem -= pay;
+      }
+    }
+
+    // ── Mark paid-off ────────────────────────────────────────────────
+    active.forEach(b => {
+      if (b.remaining <= 0.01 && b.paidOffMonth === null) {
+        b.remaining    = 0;
+        b.paidOffMonth = month;
+      }
+    });
+  }
+
+  if (currentFocusName !== null && phasePayments) {
+    phases.push({ focusBillName: currentFocusName, startMonth: phaseStartMonth, endMonth: month, payments: phasePayments });
+  }
+
+  return { bills: active, phases, totalInterest, months: month, monthlyBudget };
+}
+
+function addMonths(n) {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + Math.round(n));
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+// ── Bill display & calc ──────────────────────────────────────────────
+function calcBills() {
+  keepSelfVal = parseFloat(document.getElementById('keepSelf')?.value) || 0;
+  const baseHours = parseFloat(document.getElementById('billsBaseHours')?.value) || 80;
+
+  const { net: netPay, regHrs, otHrs } = calcGuaranteedNet(baseHours);
+
+  // Show hours breakdown label
+  const brkEl = document.getElementById('b_hoursBreakdown');
+  if (brkEl) {
+    const base = parseFloat(v('baseRate')) || 0;
+    brkEl.textContent = otHrs > 0
+      ? `${regHrs} hrs regular (${fmt(regHrs * base)}) + ${otHrs} hrs OT (${fmt(otHrs * base * 1.5)})`
+      : `${regHrs} hrs regular (${fmt(regHrs * base)})`;
+  }
+
+  const totalUtils = utilsData.reduce((s, u) => s + (u.amount || 0), 0);
+  const monthlyAvailable = Math.max(0, (netPay - keepSelfVal) * 26 / 12 - totalUtils);
+
+  const totalDebt = billsData.reduce((s, b) => s + (b.balance || 0), 0);
+  const totalMin  = billsData.reduce((s, b) => s + (b.minPayment || 0), 0);
+
+  setText('b_netPay',      fmt(netPay));
+  setText('b_fixedExp',    fmt(totalUtils));
+  setText('u_footTotal',   fmt(totalUtils));
+  setText('b_available',   fmt(monthlyAvailable));
+  setText('b_totalDebt',   fmt(totalDebt));
+  setText('b_minRequired', fmt(totalMin));
+  setText('b_footBalance', fmt(totalDebt));
+  setText('b_footMin',     fmt(totalMin));
+
+  const hasBills = billsData.some(b => b.balance > 0);
+  document.getElementById('noBillsMsg').style.display       = billsData.length === 0 ? '' : 'none';
+  document.getElementById('strategySection').style.display  = hasBills ? '' : 'none';
+  if (!hasBills) return;
+
+  const av = runPayoff(billsData, monthlyAvailable, 'avalanche');
+  const sb = runPayoff(billsData, monthlyAvailable, 'snowball');
+
+  // Summary stats
+  setText('av_interest', fmt(av.totalInterest));
+  setText('av_months',   av.months < 600 ? av.months + ' months' : '50+ years');
+  setText('av_date',     av.months < 600 ? addMonths(av.months) : '—');
+  setText('sb_interest', fmt(sb.totalInterest));
+  setText('sb_months',   sb.months < 600 ? sb.months + ' months' : '50+ years');
+  setText('sb_date',     sb.months < 600 ? addMonths(sb.months) : '—');
+
+  renderPayoffSteps('av_order', av);
+  renderPayoffSteps('sb_order', sb);
+
+  // Winner banner
+  const avWins  = av.totalInterest <= sb.totalInterest;
+  const savings = Math.abs(sb.totalInterest - av.totalInterest);
+  document.getElementById('avalancheCard').classList.toggle('winner', avWins);
+  document.getElementById('snowballCard').classList.toggle('winner', !avWins);
+  const winnerEl = document.getElementById('winnerBanner');
+  winnerEl.innerHTML = savings > 0.01
+    ? (avWins
+        ? `💡 <strong>Avalanche saves you ${fmt(savings)} in interest</strong> — attack highest-rate debt first.`
+        : `💡 <strong>Snowball saves you ${fmt(savings)} in interest</strong> here — your smaller balances carry high rates.`)
+    : `💡 Both strategies cost the same in interest — pick whichever keeps you motivated.`;
+}
+
+function renderPayoffSteps(elId, result) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+
+  const { phases, bills, monthlyBudget } = result;
+  if (!phases || phases.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:8px 0;">No payoff data.</p>';
+    return;
+  }
+
+  el.innerHTML = phases.map((phase, pi) => {
+    const startLabel  = addMonths(phase.startMonth - 1);
+    const endLabel    = addMonths(phase.endMonth);
+    const duration    = phase.endMonth - phase.startMonth + 1;
+    const isLast      = pi === phases.length - 1;
+
+    const totalThisPhase = monthlyBudget;
+
+    const payRows = phase.payments.map(p => {
+      const catchUpLine = p.catchUp
+        ? `<div class="catchup-note">Catch-up (normally ${fmt(p.minPayment || 0)}/mo after this)</div>`
+        : '';
+      const label = p.isFocus && !p.catchUp ? ' ← extra' : '';
+      return `
+        <div class="phase-payment-row ${p.isFocus ? 'phase-focus' : ''}">
+          <div>
+            <span class="phase-bill-name">${esc(p.name || '(unnamed)')}</span>
+            ${catchUpLine}
+          </div>
+          <span class="phase-bill-amt">${fmt(p.amount)}${label}</span>
+        </div>
+      `;
+    }).join('');
+
+    const freedBill = bills.find(b => b.name === phase.focusBillName);
+    const arrow = !isLast
+      ? `<div class="phase-arrow">↓ <strong>${esc(phase.focusBillName)}</strong> paid off — freed payment redirected to next focus</div>`
+      : '';
+
+    return `
+      <div class="phase-card ${pi === 0 ? 'phase-first' : ''}">
+        <div class="phase-header">
+          <div class="phase-badge">Phase ${pi + 1}</div>
+          <div class="phase-dates">${startLabel} → ${endLabel} <span class="phase-duration">(${duration} mo)</span></div>
+          <div class="phase-total">${fmt(totalThisPhase)}/mo total</div>
+        </div>
+        <div class="phase-payments">${payRows}</div>
+      </div>
+      ${arrow}
+    `;
+  }).join('');
+}
+
+// Load bills on startup (called from init IIFE)
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "name": "paycheck-calculator",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "start": "node server.js",
+    "electron": "electron .",
+    "build": "electron-packager . \"Paycheck Calculator\" --platform=win32 --arch=x64 --out=dist --overwrite --no-asar",
+    "installer": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win nsis --publish never"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongodb": "^6.3.0"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.0.1",
+    "electron": "^29.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.paycheckcalculator.app",
+    "productName": "Paycheck Calculator",
+    "asar": true,
+    "compression": "store",
+    "directories": {
+      "output": "installer-dist"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "index.html",
+      ".env",
+      "package.json",
+      "node_modules/**/*",
+      "!node_modules/.cache/**/*",
+      "!dist/**/*",
+      "!installer-dist/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/mongodb/**/*",
+      "node_modules/bson/**/*"
+    ],
+    "win": {
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Paycheck Calculator",
+      "artifactName": "Paycheck-Calculator-Setup-${version}.${ext}"
+    }
+  }
+}
