@@ -52,6 +52,9 @@
     "dmg": {
       "artifactName": "Paycheck-Calculator-${version}-${arch}.${ext}"
     },
+    "zip": {
+      "artifactName": "Paycheck-Calculator-${version}-${arch}-mac.${ext}"
+    },
     "win": {
       "target": [
         "nsis"
